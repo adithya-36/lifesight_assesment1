@@ -7,7 +7,7 @@ import streamlit as st
 # Load & Prepare Data
 # ------------------------
 def load_and_prepare_data():
-    # Load all CSVs
+    # Load all CSVs (use exact lowercase names as in repo)
     business_df = pd.read_csv("business.csv")
     facebook_df = pd.read_csv("facebook.csv")
     google_df = pd.read_csv("google.csv")
@@ -19,9 +19,10 @@ def load_and_prepare_data():
 
     # Parse dates
     for df in [business_df, facebook_df, google_df, tiktok_df]:
-        df['date'] = pd.to_datetime(df['date'], errors="coerce")
+        if "date" in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors="coerce")
 
-    # Add platform
+    # Add platform labels
     facebook_df['platform'] = "Facebook"
     google_df['platform'] = "Google"
     tiktok_df['platform'] = "TikTok"
@@ -29,12 +30,16 @@ def load_and_prepare_data():
     # Combine ads data
     ads_df = pd.concat([facebook_df, google_df, tiktok_df], ignore_index=True)
 
-    # Metrics
-    ads_df['ctr'] = (ads_df['clicks'] / ads_df['impression'].replace(0, np.nan) * 100).fillna(0)
-    ads_df['cpc'] = (ads_df['spend'] / ads_df['clicks'].replace(0, np.nan)).fillna(0)
+    # Calculate metrics safely
+    if "clicks" in ads_df.columns and "impression" in ads_df.columns and "spend" in ads_df.columns:
+        ads_df['ctr'] = (
+            ads_df['clicks'] / ads_df['impression'].replace(0, np.nan) * 100
+        ).fillna(0)
+        ads_df['cpc'] = (
+            ads_df['spend'] / ads_df['clicks'].replace(0, np.nan)
+        ).fillna(0)
 
     return business_df, ads_df
-
 
 # ------------------------
 # Dashboard
